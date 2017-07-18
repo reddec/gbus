@@ -5,6 +5,9 @@ import (
 	"github.com/reddec/astools"
 	"text/template"
 	"strings"
+	"gopkg.in/alecthomas/kingpin.v2"
+	"fmt"
+	"path"
 )
 
 func Signature(m atool.Method, f *atool.File) string {
@@ -47,19 +50,25 @@ func (p *params) EventsList() string {
 }
 
 func main() {
+	output := kingpin.Flag("output", "Output file name").Short('o').String()
+	ifaceName := kingpin.Arg("interface", "Interface name").Required().String()
+	file := kingpin.Arg("file", "File with interfaces").Required().String()
+	kingpin.Parse()
+	info, err := atool.Scan(*file)
 
-	interfaces := os.Args[1:]
-	if len(interfaces) == 0 {
-		return
+	if err != nil {
+		panic(err)
 	}
 
-	interfaceNames := map[string]bool{}
-	for _, iface := range interfaces[:len(interfaces)-1] {
-		interfaceNames[iface] = true
-	}
-	file := interfaces[len(interfaces)-1]
-	info, err := atool.Scan(file)
+	var parentDir string = path.Dir(*file)
 
+	if *output == "" {
+		*output = path.Join(parentDir, strings.ToLower(*ifaceName)+"_eventbus.go")
+	} else {
+		parentDir = path.Dir(*output)
+	}
+
+	err = os.MkdirAll(parentDir, 0755)
 	if err != nil {
 		panic(err)
 	}
@@ -71,9 +80,13 @@ func main() {
 		},
 		"call": Call,
 	}).Parse(text))
-
+	f, err := os.Create(*output)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
 	for _, iface := range info.Interfaces {
-		if interfaceNames[iface.Name] {
+		if iface.Name == *ifaceName {
 			params := params{
 				Package: info.Package,
 				Name:    iface.Name,
@@ -86,11 +99,12 @@ func main() {
 				}
 			}
 			if len(params.Events) > 0 {
-				err := busTemplate.Execute(os.Stdout, &params)
+				err := busTemplate.Execute(f, &params)
 				if err != nil {
-					panic(err)
+					fmt.Println(err)
 				}
 			}
+			break
 		}
 	}
 

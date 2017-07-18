@@ -7,13 +7,33 @@ import (
     "sync"
 )
 
+
+// How to use it:
+//
+// type Sample struct {
+//      emitter {{.Name}}EventEmitter
+// }
+//
+// func (s *Sample) Events() {{.Name}}Events { return &s.emitter }
+//
+// ...
+//
+// func (s *Sample) SomeJob() {
+//    {{- range $event := .Events}}
+// }
+//
+
+
 type (
 {{- range $event := .Events}}
 	 {{$.Name}}{{$event.Name}}HandlerFunc func({{$event | signature}}) // Listener handler function for event '{{$event.Name}}'
 {{- end}}
 )
 
-type bus{{.Name}} struct {
+// {{.Name}}EventEmitter implements events listener and events emitter operations
+// for events {{.EventsList}}
+type {{.Name}}EventEmitter struct {
+	{{.Name}}Events // Implements listener operations
     {{- range $event := .Events}}
     lock{{$event.Name}} sync.RWMutex
     on{{$event.Name}}   []{{$.Name}}{{$event.Name}}HandlerFunc
@@ -31,22 +51,24 @@ type {{.Name}}Events interface {
     // No{{$event.Name}} excludes event listener
     No{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc)
     {{- end}}
-}
 
-// New{{.Name}}Bus creates pair of emitter and listener manager
-func New{{.Name}}Bus() ({{.Name}}Events, {{.Name}}) {
-    v:= &bus{{.Name}} {}
-    return &v, &v
+	// AddHandler adds handler for events ({{.EventsList}})
+    AddHandler(handler {{.Name}})
+
+    // RemoveHandler remove handler for events
+    RemoveHandler(handler {{.Name}})
 }
 
 {{range $event := .Events}}
-func (bus *bus{{$.Name}}) On{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc) {
+// On{{$event.Name}} adds event listener for event '{{$event.Name}}'
+func (bus *{{$.Name}}EventEmitter) On{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc) {
     bus.lock{{$event.Name}}.Lock()
     defer bus.lock{{$event.Name}}.Unlock()
     bus.on{{$event.Name}} = append(bus.on{{$event.Name}}, handler)
 }
 
-func (bus *bus{{$.Name}})  No{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc) {
+// No{{$event.Name}} excludes event listener
+func (bus *{{$.Name}}EventEmitter)  No{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc) {
     bus.lock{{$event.Name}}.Lock()
     defer bus.lock{{$event.Name}}.Unlock()
     var res []{{$.Name | title}}{{$event.Name}}HandlerFunc
@@ -59,11 +81,26 @@ func (bus *bus{{$.Name}})  No{{$event.Name}}(handler {{$.Name}}{{$event.Name}}Ha
 }
 
 // {{$event.Name}} emits event with same name
-func (bus *bus{{$.Name}})  {{$event.Name}}({{$event | signature}}) {
+func (bus *{{$.Name}}EventEmitter)  {{$event.Name}}({{$event | signature}}) {
     bus.lock{{$event.Name}}.RLock()
     defer bus.lock{{$event.Name}}.RUnlock()
     for _, f := range bus.on{{$event.Name}} {
         f({{$event | call}})
     }
 }
-{{end}}`
+{{end}}
+
+// AddHandler adds handler for events ({{.EventsList}})
+func (bus *{{$.Name}}EventEmitter) AddHandler(handler {{$.Name}}) {
+	{{- range $event := .Events}}
+	bus.On{{$event.Name}}(handler.{{$event.Name}})
+	{{- end}}
+}
+
+// RemoveHandler remove handler for events
+func (bus *{{$.Name}}EventEmitter) RemoveHandler(handler {{$.Name}}) {
+	{{- range $event := .Events}}
+	bus.No{{$event.Name}}(handler.{{$event.Name}})
+	{{- end}}
+}
+`
