@@ -1,0 +1,8 @@
+package main
+
+type Processes interface {
+	Stopped(srv *Service)
+	Started(srv *Service)
+	Shutdown()
+	Initialize()
+}
