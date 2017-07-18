@@ -5,6 +5,7 @@ package {{.Package}}
 
 import (
     "sync"
+    "reflect"
 )
 
 
@@ -19,7 +20,13 @@ import (
 // ...
 //
 // func (s *Sample) SomeJob() {
-//    {{- range $event := .Events}}
+//    ...
+      {{- range $index, $event := .Events -}}
+		{{- if eq $index 0 }}
+//    s.{{$event.Name}}({{$event | call}})  // emit event {{$event.Name}}({{$event | signature}})
+		{{- end -}}
+      {{- end}}
+//    ...
 // }
 //
 
@@ -72,8 +79,9 @@ func (bus *{{$.Name}}EventEmitter)  No{{$event.Name}}(handler {{$.Name}}{{$event
     bus.lock{{$event.Name}}.Lock()
     defer bus.lock{{$event.Name}}.Unlock()
     var res []{{$.Name | title}}{{$event.Name}}HandlerFunc
+    refVal := reflect.ValueOf(handler).Pointer()
     for _, f := range bus.on{{$event.Name}} {
-        if f != handler {
+        if  reflect.ValueOf(f).Pointer() != refVal {
             res = append(res, f)
         }
     }
