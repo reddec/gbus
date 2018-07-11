@@ -35,6 +35,7 @@ func Call(m atool.Method) string {
 type params struct {
 	Package string
 	Name    string
+	File    string
 	Events  []atool.Method
 }
 
@@ -90,6 +91,7 @@ func main() {
 			params := params{
 				Package: info.Package,
 				Name:    iface.Name,
+				File:    *file,
 				Events:  []atool.Method{},
 			}
 
