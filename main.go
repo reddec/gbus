@@ -95,7 +95,7 @@ func main() {
 
 			for _, method := range iface.Methods {
 				if len(method.Out) == 0 {
-					params.Events = append(params.Events, method)
+					params.Events = append(params.Events, *method)
 				}
 			}
 			if len(params.Events) > 0 {
