@@ -63,7 +63,7 @@ func main() {
 	var parentDir string = path.Dir(*file)
 
 	if *output == "" {
-		*output = path.Join(parentDir, strings.ToLower(*ifaceName)+"_eventbus.go")
+		*output = path.Join(parentDir, strings.ToLower(*ifaceName)+"_generated.go")
 	} else {
 		parentDir = path.Dir(*output)
 	}
