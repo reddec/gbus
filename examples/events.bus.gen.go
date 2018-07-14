@@ -44,21 +44,21 @@ type EventsEmitter struct {
 // UserRegistration, ProductUpdate, CombinedEvent events
 type EventsBus interface {
 	Events
-	// UserRegistration adds event listener for event 'UserRegistration'
+	// OnUserRegistration adds event listener for 'UserRegistration' event
 	OnUserRegistration(handler EventsUserRegistrationHandlerFunc)
 	// RemoveUserRegistration excludes event listener
 	RemoveUserRegistration(handler EventsUserRegistrationHandlerFunc)
-	// ProductUpdate adds event listener for event 'ProductUpdate'
+	// OnProductUpdate adds event listener for 'ProductUpdate' event
 	OnProductUpdate(handler EventsProductUpdateHandlerFunc)
 	// RemoveProductUpdate excludes event listener
 	RemoveProductUpdate(handler EventsProductUpdateHandlerFunc)
-	// CombinedEvent adds event listener for event 'CombinedEvent'
+	// OnCombinedEvent adds event listener for 'CombinedEvent' event
 	OnCombinedEvent(handler EventsCombinedEventHandlerFunc)
 	// RemoveCombinedEvent excludes event listener
 	RemoveCombinedEvent(handler EventsCombinedEventHandlerFunc)
 }
 
-// OnUserRegistration adds event listener for event 'UserRegistration'
+// OnUserRegistration adds event listener for 'UserRegistration' event
 func (bus *EventsEmitter) OnUserRegistration(handler EventsUserRegistrationHandlerFunc) {
 	bus.lockUserRegistration.Lock()
 	defer bus.lockUserRegistration.Unlock()
@@ -79,7 +79,7 @@ func (bus *EventsEmitter) RemoveUserRegistration(handler EventsUserRegistrationH
 	bus.onUserRegistration = res
 }
 
-// UserRegistration emits event with same name
+// UserRegistration emits event with the same name
 func (bus *EventsEmitter) UserRegistration(arg0 *UserInfo) {
 	bus.lockUserRegistration.RLock()
 	defer bus.lockUserRegistration.RUnlock()
@@ -88,7 +88,7 @@ func (bus *EventsEmitter) UserRegistration(arg0 *UserInfo) {
 	}
 }
 
-// OnProductUpdate adds event listener for event 'ProductUpdate'
+// OnProductUpdate adds event listener for 'ProductUpdate' event
 func (bus *EventsEmitter) OnProductUpdate(handler EventsProductUpdateHandlerFunc) {
 	bus.lockProductUpdate.Lock()
 	defer bus.lockProductUpdate.Unlock()
@@ -109,7 +109,7 @@ func (bus *EventsEmitter) RemoveProductUpdate(handler EventsProductUpdateHandler
 	bus.onProductUpdate = res
 }
 
-// ProductUpdate emits event with same name
+// ProductUpdate emits event with the same name
 func (bus *EventsEmitter) ProductUpdate(arg0 *productModel.Product) {
 	bus.lockProductUpdate.RLock()
 	defer bus.lockProductUpdate.RUnlock()
@@ -118,7 +118,7 @@ func (bus *EventsEmitter) ProductUpdate(arg0 *productModel.Product) {
 	}
 }
 
-// OnCombinedEvent adds event listener for event 'CombinedEvent'
+// OnCombinedEvent adds event listener for 'CombinedEvent' event
 func (bus *EventsEmitter) OnCombinedEvent(handler EventsCombinedEventHandlerFunc) {
 	bus.lockCombinedEvent.Lock()
 	defer bus.lockCombinedEvent.Unlock()
@@ -139,7 +139,7 @@ func (bus *EventsEmitter) RemoveCombinedEvent(handler EventsCombinedEventHandler
 	bus.onCombinedEvent = res
 }
 
-// CombinedEvent emits event with same name
+// CombinedEvent emits event with the same name
 func (bus *EventsEmitter) CombinedEvent(arg0 UserInfo, arg1 productModel.Product) {
 	bus.lockCombinedEvent.RLock()
 	defer bus.lockCombinedEvent.RUnlock()

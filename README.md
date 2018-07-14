@@ -48,10 +48,11 @@ have following interface:
 package notifications
 
 type EventsBus interface {
+	// UserRegistration triggers 'UserRegistration' event
 	UserRegistration(*UserInfo)
-	// UserRegistration adds event listener for event 'UserRegistration'
+	// OnUserRegistration adds event listener for 'UserRegistration' event
 	OnUserRegistration(handler func(arg0 *UserInfo))
-	// RemoveUserRegistration excludes event listener
+	// RemoveUserRegistration excludes event listener from 'UserRegistration' event
 	RemoveUserRegistration(handler func(arg0 *UserInfo))
 }
 ```

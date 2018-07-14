@@ -39,14 +39,14 @@ type {{.Name}}Emitter struct {
 type {{.Name}}Bus interface {
 	{{.Name}}
 	{{- range $event := .Events}}
-	// {{$event.Name}} adds event listener for event '{{$event.Name}}'
+	// On{{$event.Name}} adds event listener for '{{$event.Name}}' event
 	On{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc)
 	// Remove{{$event.Name}} excludes event listener
 	Remove{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc)
 	{{- end}}
 }{{range $event := .Events}}
 
-// On{{$event.Name}} adds event listener for event '{{$event.Name}}'
+// On{{$event.Name}} adds event listener for '{{$event.Name}}' event
 func (bus *{{$.Name}}Emitter) On{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc) {
 	bus.lock{{$event.Name}}.Lock()
 	defer bus.lock{{$event.Name}}.Unlock()
@@ -67,7 +67,7 @@ func (bus *{{$.Name}}Emitter) Remove{{$event.Name}}(handler {{$.Name}}{{$event.N
 	bus.on{{$event.Name}} = res
 }
 
-// {{$event.Name}} emits event with same name
+// {{$event.Name}} emits event with the same name
 func (bus *{{$.Name}}Emitter) {{$event.Name}}({{$event | signature}}) {
 	bus.lock{{$event.Name}}.RLock()
 	defer bus.lock{{$event.Name}}.RUnlock()
