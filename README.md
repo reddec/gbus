@@ -1,3 +1,8 @@
+
+[![Build Status](https://travis-ci.org/oliosinter/go-events-bus.svg?branch=master)](https://travis-ci.org/oliosinter/go-events-bus)
+[![Go Report Card](https://goreportcard.com/badge/github.com/oliosinter/go-events-bus)](https://goreportcard.com/report/github.com/oliosinter/go-events-bus)
+[![GoDoc](https://godoc.org/github.com/oliosinter/go-events-bus/pkg/notifications?status.svg)](https://godoc.org/github.com/oliosinter/go-events-bus/pkg/notifications)
+
 # Golang events bus generator
 
 This package is a fork from `reddec/gbus`, with significant enhancements and bug fixes. It allows you to generate events bus
