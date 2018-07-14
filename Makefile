@@ -24,3 +24,10 @@ lint:
 .PHONY: lintfix
 lintfix:
 	goimports -w ./cmd/ ./pkg/
+
+.PHONY: vgo-install
+vgo-install:
+	go get -u golang.org/x/vgo
+
+.PHONY: travis-ci
+travis-ci: vgo-install test lint
