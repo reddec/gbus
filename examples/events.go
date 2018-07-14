@@ -1,5 +1,6 @@
 //go:generate ../bin/events-bus-gen Events events.go
 
+// nolint
 package main
 
 import productModel "github.com/oliosinter/go-events-bus/examples/models"

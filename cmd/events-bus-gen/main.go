@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/reddec/astools"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"path"
 	"strings"
 	"text/template"
+
+	"github.com/reddec/astools"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-func Signature(m atool.Method, f *atool.File) string {
+func signature(m atool.Method, f *atool.File) string {
 	t := ""
 	for i, arg := range m.In {
 		if i != 0 {
@@ -21,7 +22,7 @@ func Signature(m atool.Method, f *atool.File) string {
 	return t
 }
 
-func Call(m atool.Method) string {
+func call(m atool.Method) string {
 	t := ""
 	for i, arg := range m.In {
 		if i != 0 {
@@ -32,7 +33,7 @@ func Call(m atool.Method) string {
 	return t
 }
 
-func Import(imp, ali string) string {
+func importPackage(imp, ali string) string {
 	if ali == "" {
 		return imp
 	}
@@ -70,7 +71,7 @@ func main() {
 		panic(err)
 	}
 
-	var parentDir string = path.Dir(*file)
+	var parentDir = path.Dir(*file)
 
 	if *output == "" {
 		*output = path.Join(parentDir, strings.ToLower(*ifaceName)+".bus.gen.go")
@@ -78,7 +79,7 @@ func main() {
 		parentDir = path.Dir(*output)
 	}
 
-	err = os.MkdirAll(parentDir, 0755)
+	err = os.MkdirAll(parentDir, 0750)
 	if err != nil {
 		panic(err)
 	}
@@ -95,18 +96,20 @@ func main() {
 	var busTemplate = template.Must(template.New("").Funcs(template.FuncMap{
 		"title": strings.Title,
 		"signature": func(m atool.Method) string {
-			return Signature(m, info)
+			return signature(m, info)
 		},
-		"import": func(imp, ali string) string {
-			return Import(imp, ali)
+		"importPackage": func(imp, ali string) string {
+			return importPackage(imp, ali)
 		},
-		"call": Call,
+		"call": call,
 	}).Parse(text))
+
 	f, err := os.Create(*output)
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer f.Close() // nolint: errcheck
+
 	for _, iface := range info.Interfaces {
 		if iface.Name == *ifaceName {
 			params := params{

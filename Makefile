@@ -12,3 +12,15 @@ build:
 .PHONY: gen
 gen: build
 	vgo generate ./...
+
+.PHONY: lint
+lint:
+	goimports_out=$$(goimports -d ./cmd/ ./examples/ ./pkg/); if [ -n "$$goimports_out" ]; then \
+		  echo "$${goimports_out}"; \
+		  exit 1; \
+		  fi;
+	golangci-lint run examples/... pkg/... cmd/...
+
+.PHONY: lintfix
+lintfix:
+	goimports -w ./cmd/ ./pkg/
