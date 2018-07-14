@@ -1,13 +1,13 @@
 package main
 
 import (
-	"os"
-	"github.com/reddec/astools"
-	"text/template"
-	"strings"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"fmt"
+	"github.com/reddec/astools"
+	"gopkg.in/alecthomas/kingpin.v2"
+	"os"
 	"path"
+	"strings"
+	"text/template"
 )
 
 func Signature(m atool.Method, f *atool.File) string {
@@ -32,8 +32,17 @@ func Call(m atool.Method) string {
 	return t
 }
 
+func Import(imp, ali string) string {
+	if ali == "" {
+		return imp
+	}
+
+	return ali + " " + imp
+}
+
 type params struct {
 	Package string
+	Imports map[string]string
 	Name    string
 	File    string
 	Events  []atool.Method
@@ -64,7 +73,7 @@ func main() {
 	var parentDir string = path.Dir(*file)
 
 	if *output == "" {
-		*output = path.Join(parentDir, strings.ToLower(*ifaceName)+"_generated.go")
+		*output = path.Join(parentDir, strings.ToLower(*ifaceName)+".bus.gen.go")
 	} else {
 		parentDir = path.Dir(*output)
 	}
@@ -74,10 +83,22 @@ func main() {
 		panic(err)
 	}
 
+	var imports = map[string]string{
+		"\"reflect\"": "",
+		"\"sync\"":    "",
+	}
+
+	for imp, ali := range info.Imports {
+		imports[imp] = ali
+	}
+
 	var busTemplate = template.Must(template.New("").Funcs(template.FuncMap{
 		"title": strings.Title,
 		"signature": func(m atool.Method) string {
 			return Signature(m, info)
+		},
+		"import": func(imp, ali string) string {
+			return Import(imp, ali)
 		},
 		"call": Call,
 	}).Parse(text))
@@ -91,6 +112,7 @@ func main() {
 			params := params{
 				Package: info.Package,
 				Name:    iface.Name,
+				Imports: imports,
 				File:    *file,
 				Events:  []atool.Method{},
 			}
