@@ -4,9 +4,6 @@ go:
 
 script:
   - make test
-  - make lint
 
 install:
   - go get -u golang.org/x/vgo
-  - go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-  - go get -u golang.org/x/tools/cmd/goimports
