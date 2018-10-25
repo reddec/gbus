@@ -7,7 +7,7 @@ test:
 
 .PNONY: build
 build:
-	$(BUILD_ENVPARMS) go build -o bin/events-bus-gen ./cmd/events-bus-gen
+	$(BUILD_ENVPARMS) vgo build -o bin/events-bus-gen ./cmd/events-bus-gen
 
 .PHONY: gen
 gen: build
