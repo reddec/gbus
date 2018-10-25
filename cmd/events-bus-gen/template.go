@@ -31,6 +31,8 @@ type {{.Name}}Emitter struct {
 	lock{{$event.Name}} sync.RWMutex
 
 	on{{$event.Name}} []{{$.Name}}{{$event.Name}}HandlerFunc
+
+	on{{$event.Name}}Async []{{$.Name}}{{$event.Name}}HandlerFunc
 {{- end}}
 }
 
@@ -41,6 +43,8 @@ type {{.Name}}Bus interface {
 	{{- range $event := .Events}}
 	// On{{$event.Name}} adds event listener for '{{$event.Name}}' event
 	On{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc)
+	// On{{$event.Name}}Async adds event listener for '{{$event.Name}}' event
+	On{{$event.Name}}Async(handler {{$.Name}}{{$event.Name}}HandlerFunc)
 	// Remove{{$event.Name}} excludes event listener
 	Remove{{$event.Name}}(handler {{$.Name}}{{$event.Name}}HandlerFunc)
 	{{- end}}
@@ -51,6 +55,13 @@ func (bus *{{$.Name}}Emitter) On{{$event.Name}}(handler {{$.Name}}{{$event.Name}
 	bus.lock{{$event.Name}}.Lock()
 	defer bus.lock{{$event.Name}}.Unlock()
 	bus.on{{$event.Name}} = append(bus.on{{$event.Name}}, handler)
+}
+
+// On{{$event.Name}}Async adds event listener for '{{$event.Name}}' event
+func (bus *{{$.Name}}Emitter) On{{$event.Name}}Async(handler {{$.Name}}{{$event.Name}}HandlerFunc) {
+	bus.lock{{$event.Name}}.Lock()
+	defer bus.lock{{$event.Name}}.Unlock()
+	bus.on{{$event.Name}}Async = append(bus.on{{$event.Name}}Async, handler)
 }
 
 // Remove{{$event.Name}} excludes event listener
@@ -65,14 +76,31 @@ func (bus *{{$.Name}}Emitter) Remove{{$event.Name}}(handler {{$.Name}}{{$event.N
 		}
 	}
 	bus.on{{$event.Name}} = res
+	
+	res = []{{$.Name | title}}{{$event.Name}}HandlerFunc{}
+	for _, f := range bus.on{{$event.Name}}Async {
+		if reflect.ValueOf(f).Pointer() != refVal {
+			res = append(res, f)
+		}
+	}
+	bus.on{{$event.Name}}Async = res
 }
 
 // {{$event.Name}} emits event with the same name
 func (bus *{{$.Name}}Emitter) {{$event.Name}}({{$event | signature}}) {
 	bus.lock{{$event.Name}}.RLock()
 	defer bus.lock{{$event.Name}}.RUnlock()
+	wg := &sync.WaitGroup{}
+	for _, f := range bus.on{{$event.Name}}Async {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, f {{$.Name}}{{$event.Name}}HandlerFunc) {
+			defer wg.Done()
+			f({{$event | call}})
+		}(wg, f)
+	}
 	for _, f := range bus.on{{$event.Name}} {
 		f({{$event | call}})
 	}
+	wg.Wait()
 }{{end}}
 `

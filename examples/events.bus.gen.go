@@ -31,13 +31,19 @@ type EventsEmitter struct {
 
 	onUserRegistration []EventsUserRegistrationHandlerFunc
 
+	onUserRegistrationAsync []EventsUserRegistrationHandlerFunc
+
 	lockProductUpdate sync.RWMutex
 
 	onProductUpdate []EventsProductUpdateHandlerFunc
 
+	onProductUpdateAsync []EventsProductUpdateHandlerFunc
+
 	lockCombinedEvent sync.RWMutex
 
 	onCombinedEvent []EventsCombinedEventHandlerFunc
+
+	onCombinedEventAsync []EventsCombinedEventHandlerFunc
 }
 
 // EventsBus is a client side of event bus that allows subscribe to
@@ -46,14 +52,20 @@ type EventsBus interface {
 	Events
 	// OnUserRegistration adds event listener for 'UserRegistration' event
 	OnUserRegistration(handler EventsUserRegistrationHandlerFunc)
+	// OnUserRegistrationAsync adds event listener for 'UserRegistration' event
+	OnUserRegistrationAsync(handler EventsUserRegistrationHandlerFunc)
 	// RemoveUserRegistration excludes event listener
 	RemoveUserRegistration(handler EventsUserRegistrationHandlerFunc)
 	// OnProductUpdate adds event listener for 'ProductUpdate' event
 	OnProductUpdate(handler EventsProductUpdateHandlerFunc)
+	// OnProductUpdateAsync adds event listener for 'ProductUpdate' event
+	OnProductUpdateAsync(handler EventsProductUpdateHandlerFunc)
 	// RemoveProductUpdate excludes event listener
 	RemoveProductUpdate(handler EventsProductUpdateHandlerFunc)
 	// OnCombinedEvent adds event listener for 'CombinedEvent' event
 	OnCombinedEvent(handler EventsCombinedEventHandlerFunc)
+	// OnCombinedEventAsync adds event listener for 'CombinedEvent' event
+	OnCombinedEventAsync(handler EventsCombinedEventHandlerFunc)
 	// RemoveCombinedEvent excludes event listener
 	RemoveCombinedEvent(handler EventsCombinedEventHandlerFunc)
 }
@@ -63,6 +75,13 @@ func (bus *EventsEmitter) OnUserRegistration(handler EventsUserRegistrationHandl
 	bus.lockUserRegistration.Lock()
 	defer bus.lockUserRegistration.Unlock()
 	bus.onUserRegistration = append(bus.onUserRegistration, handler)
+}
+
+// OnUserRegistrationAsync adds event listener for 'UserRegistration' event
+func (bus *EventsEmitter) OnUserRegistrationAsync(handler EventsUserRegistrationHandlerFunc) {
+	bus.lockUserRegistration.Lock()
+	defer bus.lockUserRegistration.Unlock()
+	bus.onUserRegistrationAsync = append(bus.onUserRegistrationAsync, handler)
 }
 
 // RemoveUserRegistration excludes event listener
@@ -77,15 +96,32 @@ func (bus *EventsEmitter) RemoveUserRegistration(handler EventsUserRegistrationH
 		}
 	}
 	bus.onUserRegistration = res
+	
+	res = []EventsUserRegistrationHandlerFunc{}
+	for _, f := range bus.onUserRegistrationAsync {
+		if reflect.ValueOf(f).Pointer() != refVal {
+			res = append(res, f)
+		}
+	}
+	bus.onUserRegistrationAsync = res
 }
 
 // UserRegistration emits event with the same name
 func (bus *EventsEmitter) UserRegistration(arg0 *UserInfo) {
 	bus.lockUserRegistration.RLock()
 	defer bus.lockUserRegistration.RUnlock()
+	wg := &sync.WaitGroup{}
+	for _, f := range bus.onUserRegistrationAsync {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, f EventsUserRegistrationHandlerFunc) {
+			defer wg.Done()
+			f(arg0)
+		}(wg, f)
+	}
 	for _, f := range bus.onUserRegistration {
 		f(arg0)
 	}
+	wg.Wait()
 }
 
 // OnProductUpdate adds event listener for 'ProductUpdate' event
@@ -93,6 +129,13 @@ func (bus *EventsEmitter) OnProductUpdate(handler EventsProductUpdateHandlerFunc
 	bus.lockProductUpdate.Lock()
 	defer bus.lockProductUpdate.Unlock()
 	bus.onProductUpdate = append(bus.onProductUpdate, handler)
+}
+
+// OnProductUpdateAsync adds event listener for 'ProductUpdate' event
+func (bus *EventsEmitter) OnProductUpdateAsync(handler EventsProductUpdateHandlerFunc) {
+	bus.lockProductUpdate.Lock()
+	defer bus.lockProductUpdate.Unlock()
+	bus.onProductUpdateAsync = append(bus.onProductUpdateAsync, handler)
 }
 
 // RemoveProductUpdate excludes event listener
@@ -107,15 +150,32 @@ func (bus *EventsEmitter) RemoveProductUpdate(handler EventsProductUpdateHandler
 		}
 	}
 	bus.onProductUpdate = res
+	
+	res = []EventsProductUpdateHandlerFunc{}
+	for _, f := range bus.onProductUpdateAsync {
+		if reflect.ValueOf(f).Pointer() != refVal {
+			res = append(res, f)
+		}
+	}
+	bus.onProductUpdateAsync = res
 }
 
 // ProductUpdate emits event with the same name
 func (bus *EventsEmitter) ProductUpdate(arg0 *productModel.Product) {
 	bus.lockProductUpdate.RLock()
 	defer bus.lockProductUpdate.RUnlock()
+	wg := &sync.WaitGroup{}
+	for _, f := range bus.onProductUpdateAsync {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, f EventsProductUpdateHandlerFunc) {
+			defer wg.Done()
+			f(arg0)
+		}(wg, f)
+	}
 	for _, f := range bus.onProductUpdate {
 		f(arg0)
 	}
+	wg.Wait()
 }
 
 // OnCombinedEvent adds event listener for 'CombinedEvent' event
@@ -123,6 +183,13 @@ func (bus *EventsEmitter) OnCombinedEvent(handler EventsCombinedEventHandlerFunc
 	bus.lockCombinedEvent.Lock()
 	defer bus.lockCombinedEvent.Unlock()
 	bus.onCombinedEvent = append(bus.onCombinedEvent, handler)
+}
+
+// OnCombinedEventAsync adds event listener for 'CombinedEvent' event
+func (bus *EventsEmitter) OnCombinedEventAsync(handler EventsCombinedEventHandlerFunc) {
+	bus.lockCombinedEvent.Lock()
+	defer bus.lockCombinedEvent.Unlock()
+	bus.onCombinedEventAsync = append(bus.onCombinedEventAsync, handler)
 }
 
 // RemoveCombinedEvent excludes event listener
@@ -137,13 +204,30 @@ func (bus *EventsEmitter) RemoveCombinedEvent(handler EventsCombinedEventHandler
 		}
 	}
 	bus.onCombinedEvent = res
+	
+	res = []EventsCombinedEventHandlerFunc{}
+	for _, f := range bus.onCombinedEventAsync {
+		if reflect.ValueOf(f).Pointer() != refVal {
+			res = append(res, f)
+		}
+	}
+	bus.onCombinedEventAsync = res
 }
 
 // CombinedEvent emits event with the same name
 func (bus *EventsEmitter) CombinedEvent(arg0 UserInfo, arg1 productModel.Product) {
 	bus.lockCombinedEvent.RLock()
 	defer bus.lockCombinedEvent.RUnlock()
+	wg := &sync.WaitGroup{}
+	for _, f := range bus.onCombinedEventAsync {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, f EventsCombinedEventHandlerFunc) {
+			defer wg.Done()
+			f(arg0, arg1)
+		}(wg, f)
+	}
 	for _, f := range bus.onCombinedEvent {
 		f(arg0, arg1)
 	}
+	wg.Wait()
 }
